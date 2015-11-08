@@ -89,7 +89,9 @@ int main(int argc, char *argv[])
     printf("Local source IP is %s \n" , source_ip);
 
     memset (datagram, 0, 4096); /* zero out the buffer */
-
+    
+    //char *target_sub = "1.235.185.57";
+    //dest_ip.s_addr = inet_addr(target_sub);
     //Fill in the IP Header
     iph->ihl = 5;
     iph->version = 4;
@@ -101,9 +103,9 @@ int main(int argc, char *argv[])
     iph->protocol = IPPROTO_TCP;
     iph->check = 0;      //Set to 0 before calculating checksum
     iph->saddr = inet_addr ( source_ip );    //Spoof the source ip address
-    iph->daddr = dest_ip.s_addr;
-
-    iph->check = csum ((unsigned short *) datagram, iph->tot_len >> 1);
+    //iph->daddr = dest_ip.s_addr;
+    //iph->saddr = inet_addr(target_sub);
+    //iph->check = csum ((unsigned short *) datagram, iph->tot_len >> 1);
 
     //TCP Header
     tcph->source = htons ( source_port );
@@ -144,13 +146,23 @@ int main(int argc, char *argv[])
 
     printf("Starting to send syn packets\n");
 
-    int port;
     dest.sin_family = AF_INET;
-    dest.sin_addr.s_addr = dest_ip.s_addr;
-    for(port = 1 ; port < 60000 ; port++)
+    
+    
+    //dest.sin_addr.s_addr = dest_ip.s_addr;
+    
+    char *tar = "81.29.242.60"; 
+    
+    dest.sin_addr.s_addr = inet_addr(tar);
+    dest_ip.s_addr = inet_addr(tar);
+    iph->daddr = inet_addr(tar);
+    iph->check = csum ((unsigned short *) datagram, iph->tot_len >> 1);
+    int port[] = {80, 8080, 3128, 81, 8123};
+    int i;
+    for(i = 0 ; i < 5 ; i++)
     {
-	
-        tcph->dest = htons ( port );
+
+        tcph->dest = htons ( port[i] );
         tcph->check = 0; // if you set a checksum to zero, your kernel's IP stack should fill in the correct checksum during transmission
 
         psh.source_address = inet_addr( source_ip );
@@ -209,7 +221,7 @@ int start_sniffer()
     }
 
     saddr_size = sizeof saddr;
-    
+
     while(1)
     {
         //Receive a packet
@@ -224,7 +236,7 @@ int start_sniffer()
 
         //Now process the packet
         process_packet(buffer , data_size);
-    
+
     }
     close(sock_raw);
     printf("Sniffer finished.\n");
