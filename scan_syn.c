@@ -1,3 +1,4 @@
+
 #include<stdio.h> //printf
 #include<string.h> //memset
 #include<stdlib.h> //for exit(0);
@@ -8,6 +9,8 @@
 #include<arpa/inet.h>
 #include<netinet/tcp.h>   //Provides declarations for tcp header
 #include<netinet/ip.h>    //Provides declarations for ip header
+#include "generate_ip.c"
+
 
 void * receive_ack( void *ptr );
 void process_packet(unsigned char* , int);
@@ -80,7 +83,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
     }
-
+    
     int source_port = 43591;
     char source_ip[20];
     get_local_ip( source_ip );
@@ -147,11 +150,22 @@ int main(int argc, char *argv[])
 
     dest.sin_family = AF_INET;
     
-    
+    //char test[10];
+    //char *te = test;
     //dest.sin_addr.s_addr = dest_ip.s_addr;
     
     char *tar = "202.164.38.11"; 
     
+    struct data *arr =(struct data*) malloc(sizeof(struct data));
+    
+    generate_ip(arr);
+    int t=0;
+    for(t=0; t<1000; t++){
+      tar = arr->array[t];
+      
+    
+     //char *tar = arr->array[t];
+    printf("%s\n", tar);
     dest.sin_addr.s_addr = inet_addr(tar);
     dest_ip.s_addr = inet_addr(tar);
     iph->daddr = inet_addr(tar);
@@ -178,9 +192,13 @@ int main(int argc, char *argv[])
         if ( sendto (s, datagram , sizeof(struct iphdr) + sizeof(struct tcphdr) , 0 , (struct sockaddr *) &dest, sizeof (dest)) < 0)
         {
             printf ("Error sending syn packet. Error number : %d . Error message : %s \n" , errno , strerror(errno));
-            exit(0);
+            printf("%s\n", tar);
+	    //exit(0)
+	    continue;
         }
     }
+    }
+    
 
     pthread_join( sniffer_thread , NULL);
     printf("%d" , iret1);
