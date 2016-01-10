@@ -22,7 +22,6 @@ struct pseudo_header    //needed for checksum calculation
     unsigned char placeholder;
     unsigned char protocol;
     unsigned short tcp_length;
-
     struct tcphdr tcp;
 };
 
@@ -137,7 +136,7 @@ int main(int argc, char *argv[])
     char *message1 = "Thread 1";
     int  iret1;
     pthread_t sniffer_thread;
-
+    //开启嗅探线程 接收返回包
     if( pthread_create( &sniffer_thread , NULL ,  receive_ack , (void*) message1) < 0)
     {
         printf ("Could not create sniffer thread. Error number : %d . Error message : %s \n" , errno , strerror(errno));
@@ -151,7 +150,7 @@ int main(int argc, char *argv[])
     
     //dest.sin_addr.s_addr = dest_ip.s_addr;
     
-    char *tar = "81.29.242.60"; 
+    char *tar = "202.164.38.11"; 
     
     dest.sin_addr.s_addr = inet_addr(tar);
     dest_ip.s_addr = inet_addr(tar);
