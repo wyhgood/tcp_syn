@@ -154,18 +154,20 @@ int main(int argc, char *argv[])
     //char *te = test;
     //dest.sin_addr.s_addr = dest_ip.s_addr;
     
-    char *tar = "202.164.38.11"; 
+    //char *tar = "202.164.38.11";
+    char *tar = "113.255.61.57";
     
     struct data *arr =(struct data*) malloc(sizeof(struct data));
     
     generate_ip(arr);
     int t=0;
-    for(t=0; t<1000; t++){
+    for(t=1; t<SUM; t++){
       tar = arr->array[t];
-      
+      //tar = argv[t];
     
-     //char *tar = arr->array[t];
-    printf("%s\n", tar);
+      //char *tar = arr->array[t];
+      //printf("%s\n", tar);
+      //printf("%d\n", (int)strlen(tar));
     dest.sin_addr.s_addr = inet_addr(tar);
     dest_ip.s_addr = inet_addr(tar);
     iph->daddr = inet_addr(tar);
@@ -281,8 +283,9 @@ void process_packet(unsigned char* buffer, int size)
         memset(&dest, 0, sizeof(dest));
         dest.sin_addr.s_addr = iph->daddr;
 
-        if(tcph->syn == 1 && tcph->ack == 1 && source.sin_addr.s_addr == dest_ip.s_addr )
-        {
+        //if(tcph->syn == 1 && tcph->ack == 1 && source.sin_addr.s_addr == dest_ip.s_addr )
+	if(tcph->syn == 1 && tcph->ack == 1)
+	{
   	    struct in_addr addr1;
 	    ulong l1 = iph->saddr;
             memcpy(&addr1, &l1, 4);

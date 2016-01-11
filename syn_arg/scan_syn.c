@@ -166,8 +166,8 @@ int main(int argc, char *argv[])
       tar = argv[t];
     
       //char *tar = arr->array[t];
-      printf("%s\n", tar);
-      printf("%d\n", (int)strlen(tar));
+      printf("target_ip is %s\n", tar);
+      //printf("%d\n", (int)strlen(tar));
     dest.sin_addr.s_addr = inet_addr(tar);
     dest_ip.s_addr = inet_addr(tar);
     iph->daddr = inet_addr(tar);
@@ -176,7 +176,6 @@ int main(int argc, char *argv[])
     int i;
     for(i = 0 ; i < 5 ; i++)
     {
-
         tcph->dest = htons ( port[i] );
         tcph->check = 0; // if you set a checksum to zero, your kernel's IP stack should fill in the correct checksum during transmission
 
@@ -283,8 +282,9 @@ void process_packet(unsigned char* buffer, int size)
         memset(&dest, 0, sizeof(dest));
         dest.sin_addr.s_addr = iph->daddr;
 
-        if(tcph->syn == 1 && tcph->ack == 1 && source.sin_addr.s_addr == dest_ip.s_addr )
-        {
+        //if(tcph->syn == 1 && tcph->ack == 1 && source.sin_addr.s_addr == dest_ip.s_addr )
+        if(tcph->syn == 1 && tcph->ack == 1)
+	{
   	    struct in_addr addr1;
 	    ulong l1 = iph->saddr;
             memcpy(&addr1, &l1, 4);
