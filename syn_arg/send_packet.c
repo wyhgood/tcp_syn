@@ -84,14 +84,23 @@ int main(int argc, char *argv[])
         }
     }
     
-    int source_port = 43591;
+    send_packet();
+    printf("%d" , iret1);
+
+    return 0;
+}
+
+
+int send_packet()
+{
+     int source_port = 43591;
     char source_ip[20];
     get_local_ip( source_ip );
 
     printf("Local source IP is %s \n" , source_ip);
 
     memset (datagram, 0, 4096); /* zero out the buffer */
-    
+
     //char *target_sub = "1.235.185.57";
     //dest_ip.s_addr = inet_addr(target_sub);
     //Fill in the IP Header
@@ -135,36 +144,25 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    printf("Starting sniffer thread...\n");
-    char *message1 = "Thread 1";
-    int  iret1;
-    pthread_t sniffer_thread;
-    //开启嗅探线程 接收返回包
-    if( pthread_create( &sniffer_thread , NULL ,  receive_ack , (void*) message1) < 0)
-    {
-        printf ("Could not create sniffer thread. Error number : %d . Error message : %s \n" , errno , strerror(errno));
-        exit(0);
-    }
-
     printf("Starting to send syn packets\n");
 
     dest.sin_family = AF_INET;
-    
+
     //char test[10];
     //char *te = test;
     //dest.sin_addr.s_addr = dest_ip.s_addr;
-    
+
     //char *tar = "202.164.38.11";
     char *tar = "113.255.61.57";
-    
+
     struct data *arr =(struct data*) malloc(sizeof(struct data));
-    
+
     generate_ip(arr);
     int t=0;
     //for(t=1; t<argc; t++){
       //tar = arr->array[t];
      // tar = argv[t];
-    
+
       //char *tar = arr->array[t];
     //printf("target_ip is %s\n", tar);
     printf("target_ip is %s\n", arr);
@@ -199,14 +197,11 @@ int main(int argc, char *argv[])
 	    continue;
         }
     }
-    //}
-    
 
-    pthread_join( sniffer_thread , NULL);
-    printf("%d" , iret1);
-
-    return 0;
 }
+
+
+
 
 /*
     Method to sniff incoming packets and look for Ack replies
