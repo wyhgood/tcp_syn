@@ -154,6 +154,12 @@ void process_packet(unsigned char* buffer, int size)
 	    ulong l1 = iph->saddr;
             memcpy(&addr1, &l1, 4);
 	    //printf("Ip %s \n", inet_ntoa(addr1));
+            FILE *fpWrite=fopen("data.txt","a");
+	    if(fpWrite==NULL)
+	    {
+		return 0;
+	    }
+            fprintf(fpWrite,"Ip %s:Port %d open \n" ,inet_ntoa(addr1), ntohs(tcph->source));
             printf("Ip %s:Port %d open \n" ,inet_ntoa(addr1), ntohs(tcph->source));
             fflush(stdout);
         }

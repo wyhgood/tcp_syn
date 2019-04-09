@@ -18,6 +18,7 @@ unsigned short csum(unsigned short * , int );
 char * hostname_to_ip(char * );
 int get_local_ip (char *);
 
+
 struct pseudo_header    //needed for checksum calculation
 {
     unsigned int source_address;
@@ -33,15 +34,42 @@ struct in_addr dest_ip;
 int main(int argc, char *argv[])
 {
     //Create a raw socket
+    char *target = argv[1];
+
+    if(argc < 2)
+    {
+        printf("Please specify a hostname \n");
+        exit(1);
+    }
+
+
+    int number = atoi(target);
+    int ip1 = rand()%256+1;
+    int n = 1;
+    while(n < number){
+        if(n % 10 == 0){
+            printf("progress %d \n",n);
+        }
+        send_packet();
+        n+=1;
+    }
+
+    return 0;
+}
+
+
+int send_packet()
+{
     int s = socket (AF_INET, SOCK_RAW , IPPROTO_TCP);
     if(s < 0)
     {
         printf ("Error creating socket. Error number : %d . Error message : %s \n" , errno , strerror(errno));
-        exit(0);
+        //exit(0);
+        return(0);
     }
     else
     {
-        printf("Socket created.\n");
+        //printf("Socket created.\n");
     }
 
     //Datagram to represent the packet
@@ -56,48 +84,11 @@ int main(int argc, char *argv[])
     struct sockaddr_in  dest;
     struct pseudo_header psh;
 
-    char *target = argv[1];
-
-    if(argc < 2)
-    {
-        printf("Please specify a hostname \n");
-        exit(1);
-    }
-
-    if( inet_addr( target ) != -1)
-    {
-        dest_ip.s_addr = inet_addr( target );
-    }
-    else
-    {
-        char *ip = hostname_to_ip(target);
-        if(ip != NULL)
-        {
-            printf("%s resolved to %s \n" , target , ip);
-            //Convert domain name to IP
-            dest_ip.s_addr = inet_addr( hostname_to_ip(target) );
-        }
-        else
-        {
-            printf("Unable to resolve hostname : %s" , target);
-            exit(1);
-        }
-    }
-    
-    send_packet();
-    printf("%d" , iret1);
-
-    return 0;
-}
-
-
-int send_packet()
-{
      int source_port = 43591;
     char source_ip[20];
     get_local_ip( source_ip );
 
-    printf("Local source IP is %s \n" , source_ip);
+    //printf("Local source IP is %s \n" , source_ip);
 
     memset (datagram, 0, 4096); /* zero out the buffer */
 
@@ -141,10 +132,11 @@ int send_packet()
     if (setsockopt (s, IPPROTO_IP, IP_HDRINCL, val, sizeof (one)) < 0)
     {
         printf ("Error setting IP_HDRINCL. Error number : %d . Error message : %s \n" , errno , strerror(errno));
-        exit(0);
+        //exit(0);
+        return 0;
     }
 
-    printf("Starting to send syn packets\n");
+    //printf("Starting to send syn packets\n");
 
     dest.sin_family = AF_INET;
 
@@ -153,12 +145,10 @@ int send_packet()
     //dest.sin_addr.s_addr = dest_ip.s_addr;
 
     //char *tar = "202.164.38.11";
-    char *tar = "113.255.61.57";
-
-    struct data *arr =(struct data*) malloc(sizeof(struct data));
-
+    //char *tar = "113.255.61.57";
+    char arr[50];
+    //struct data *arr = "123.125.114.144";
     generate_ip(arr);
-    int t=0;
     //for(t=1; t<argc; t++){
       //tar = arr->array[t];
      // tar = argv[t];
@@ -167,9 +157,9 @@ int send_packet()
     //printf("target_ip is %s\n", tar);
     printf("target_ip is %s\n", arr);
       //printf("%d\n", (int)strlen(tar));
-    dest.sin_addr.s_addr = inet_addr(tar);
-    dest_ip.s_addr = inet_addr(tar);
-    iph->daddr = inet_addr(tar);
+    dest.sin_addr.s_addr = inet_addr(arr);
+    dest_ip.s_addr = inet_addr(arr);
+    iph->daddr = inet_addr(arr);
     iph->check = csum ((unsigned short *) datagram, iph->tot_len >> 1);
     int port[] = {80, 8080, 3128, 81, 8123};
     int i;
@@ -192,12 +182,12 @@ int send_packet()
         if ( sendto (s, datagram , sizeof(struct iphdr) + sizeof(struct tcphdr) , 0 , (struct sockaddr *) &dest, sizeof (dest)) < 0)
         {
             printf ("Error sending syn packet. Error number : %d . Error message : %s \n" , errno , strerror(errno));
-            printf("%s\n", tar);
+            //printf("%s\n", arr);
 	    //exit(0)
-	    continue;
+	    return(0);
         }
     }
-
+    close(s);
 }
 
 
@@ -221,7 +211,7 @@ int start_sniffer()
 
     unsigned char *buffer = (unsigned char *)malloc(65536); //Its Big!
 
-    printf("Sniffer initialising...\n");
+    //printf("Sniffer initialising...\n");
     fflush(stdout);
 
     //Create a raw socket that shall sniff
@@ -253,7 +243,7 @@ int start_sniffer()
 
     }
     close(sock_raw);
-    printf("Sniffer finished.\n");
+    //printf("Sniffer finished.\n");
     fflush(stdout);
     return 0;
 }
