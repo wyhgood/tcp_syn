@@ -157,9 +157,9 @@ int main(int argc, char *argv[])
     //char *tar = "202.164.38.11";
     char *tar = "113.255.61.57";
     
-    struct data *arr =(struct data*) malloc(sizeof(struct data));
-    
-    generate_ip(arr);
+    //struct data *arr =(struct data*) malloc(sizeof(struct data));
+    char *arr = "123.125.114.144";
+    //generate_ip(arr);
     int t=0;
     //for(t=1; t<argc; t++){
       //tar = arr->array[t];
@@ -169,17 +169,18 @@ int main(int argc, char *argv[])
     //printf("target_ip is %s\n", tar);
     printf("target_ip is %s\n", arr);
       //printf("%d\n", (int)strlen(tar));
-    dest.sin_addr.s_addr = inet_addr(tar);
-    dest_ip.s_addr = inet_addr(tar);
-    iph->daddr = inet_addr(tar);
+    dest.sin_addr.s_addr = inet_addr(arr);
+    dest_ip.s_addr = inet_addr(arr);
+    iph->daddr = inet_addr(arr);
     iph->check = csum ((unsigned short *) datagram, iph->tot_len >> 1);
-    int port[] = {80, 8080, 3128, 81, 8123};
+    int port[] = {80, 3128, 81, 8123, 80};
     int i;
+    printf("%s", "22222");
     for(i = 0 ; i < 5 ; i++)
     {
         tcph->dest = htons ( port[i] );
         tcph->check = 0; // if you set a checksum to zero, your kernel's IP stack should fill in the correct checksum during transmission
-
+        printf("%s", "1111111");
         psh.source_address = inet_addr( source_ip );
         psh.dest_address = dest.sin_addr.s_addr;
         psh.placeholder = 0;
@@ -198,6 +199,8 @@ int main(int argc, char *argv[])
 	    //exit(0)
 	    continue;
         }
+    
+        //pthread_join( sniffer_thread , NULL);
     }
     //}
     

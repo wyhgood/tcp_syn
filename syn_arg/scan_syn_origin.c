@@ -1,4 +1,3 @@
-
 #include<stdio.h> //printf
 #include<string.h> //memset
 #include<stdlib.h> //for exit(0);
@@ -10,14 +9,13 @@
 #include<netinet/tcp.h>   //Provides declarations for tcp header
 #include<netinet/ip.h>    //Provides declarations for ip header
 #include "generate_ip.c"
-#include <time.h>
+
 
 void * receive_ack( void *ptr );
 void process_packet(unsigned char* , int);
 unsigned short csum(unsigned short * , int );
 char * hostname_to_ip(char * );
 int get_local_ip (char *);
-
 
 struct pseudo_header    //needed for checksum calculation
 {
@@ -34,41 +32,15 @@ struct in_addr dest_ip;
 int main(int argc, char *argv[])
 {
     //Create a raw socket
-    char *target = argv[1];
-
-    if(argc < 2)
-    {
-        printf("Please specify a hostname \n");
-        exit(1);
-    }
-    time_t t;
-    srand((unsigned)time(&t));
-    int number = atoi(target);
-    int n = 1;
-    while(n < number){
-        if(n % 10 == 0){
-            printf("progress %d \n",n);
-        }
-        send_packet();
-        n+=1;
-    }
-
-    return 0;
-}
-
-
-int send_packet()
-{
     int s = socket (AF_INET, SOCK_RAW , IPPROTO_TCP);
     if(s < 0)
     {
         printf ("Error creating socket. Error number : %d . Error message : %s \n" , errno , strerror(errno));
-        //exit(0);
-        return(0);
+        exit(0);
     }
     else
     {
-        //printf("Socket created.\n");
+        printf("Socket created.\n");
     }
 
     //Datagram to represent the packet
@@ -83,14 +55,42 @@ int send_packet()
     struct sockaddr_in  dest;
     struct pseudo_header psh;
 
-     int source_port = 43591;
+    char *target = argv[1];
+
+    if(argc < 2)
+    {
+        printf("Please specify a hostname \n");
+        exit(1);
+    }
+
+    if( inet_addr( target ) != -1)
+    {
+        dest_ip.s_addr = inet_addr( target );
+    }
+    else
+    {
+        char *ip = hostname_to_ip(target);
+        if(ip != NULL)
+        {
+            printf("%s resolved to %s \n" , target , ip);
+            //Convert domain name to IP
+            dest_ip.s_addr = inet_addr( hostname_to_ip(target) );
+        }
+        else
+        {
+            printf("Unable to resolve hostname : %s" , target);
+            exit(1);
+        }
+    }
+    
+    int source_port = 43591;
     char source_ip[20];
     get_local_ip( source_ip );
 
-    //printf("Local source IP is %s \n" , source_ip);
+    printf("Local source IP is %s \n" , source_ip);
 
     memset (datagram, 0, 4096); /* zero out the buffer */
-
+    
     //char *target_sub = "1.235.185.57";
     //dest_ip.s_addr = inet_addr(target_sub);
     //Fill in the IP Header
@@ -131,38 +131,50 @@ int send_packet()
     if (setsockopt (s, IPPROTO_IP, IP_HDRINCL, val, sizeof (one)) < 0)
     {
         printf ("Error setting IP_HDRINCL. Error number : %d . Error message : %s \n" , errno , strerror(errno));
-        //exit(0);
-        return 0;
+        exit(0);
     }
 
-    //printf("Starting to send syn packets\n");
+    printf("Starting sniffer thread...\n");
+    char *message1 = "Thread 1";
+    int  iret1;
+    pthread_t sniffer_thread;
+    //开启嗅探线程 接收返回包
+    if( pthread_create( &sniffer_thread , NULL ,  receive_ack , (void*) message1) < 0)
+    {
+        printf ("Could not create sniffer thread. Error number : %d . Error message : %s \n" , errno , strerror(errno));
+        exit(0);
+    }
+
+    printf("Starting to send syn packets\n");
 
     dest.sin_family = AF_INET;
-
+    
     //char test[10];
     //char *te = test;
     //dest.sin_addr.s_addr = dest_ip.s_addr;
-
+    
     //char *tar = "202.164.38.11";
-    //char *tar = "113.255.61.57";
-    char arr[50];
-    //struct data *arr = "123.125.114.144";
-    generate_ip(arr);
+    char *tar = "113.255.61.57";
+    
+    //struct data *arr =(struct data*) malloc(sizeof(struct data));
+    
+    //generate_ip(arr);
+    int t=0;
     //for(t=1; t<argc; t++){
       //tar = arr->array[t];
      // tar = argv[t];
-
+    char *arr = "123.125.114.144"; 
       //char *tar = arr->array[t];
     //printf("target_ip is %s\n", tar);
     printf("target_ip is %s\n", arr);
       //printf("%d\n", (int)strlen(tar));
-    dest.sin_addr.s_addr = inet_addr(arr);
-    dest_ip.s_addr = inet_addr(arr);
-    iph->daddr = inet_addr(arr);
+    dest.sin_addr.s_addr = inet_addr(tar);
+    dest_ip.s_addr = inet_addr(tar);
+    iph->daddr = inet_addr(tar);
     iph->check = csum ((unsigned short *) datagram, iph->tot_len >> 1);
-    int port[] = {80, 8080, 3128, 81, 8123, 9999, 9000, 8060, 53281, 8118, 8888};
+    int port[] = {80, 8080, 3128, 81, 8123};
     int i;
-    for(i = 0 ; i < 11 ; i++)
+    for(i = 0 ; i < 5 ; i++)
     {
         tcph->dest = htons ( port[i] );
         tcph->check = 0; // if you set a checksum to zero, your kernel's IP stack should fill in the correct checksum during transmission
@@ -181,16 +193,19 @@ int send_packet()
         if ( sendto (s, datagram , sizeof(struct iphdr) + sizeof(struct tcphdr) , 0 , (struct sockaddr *) &dest, sizeof (dest)) < 0)
         {
             printf ("Error sending syn packet. Error number : %d . Error message : %s \n" , errno , strerror(errno));
-            //printf("%s\n", arr);
+            printf("%s\n", tar);
 	    //exit(0)
-	    return(0);
+	    continue;
         }
     }
-    close(s);
+    //}
+    
+
+    pthread_join( sniffer_thread , NULL);
+    printf("%d" , iret1);
+
+    return 0;
 }
-
-
-
 
 /*
     Method to sniff incoming packets and look for Ack replies
@@ -210,7 +225,7 @@ int start_sniffer()
 
     unsigned char *buffer = (unsigned char *)malloc(65536); //Its Big!
 
-    //printf("Sniffer initialising...\n");
+    printf("Sniffer initialising...\n");
     fflush(stdout);
 
     //Create a raw socket that shall sniff
@@ -242,7 +257,7 @@ int start_sniffer()
 
     }
     close(sock_raw);
-    //printf("Sniffer finished.\n");
+    printf("Sniffer finished.\n");
     fflush(stdout);
     return 0;
 }

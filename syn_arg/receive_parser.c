@@ -88,7 +88,7 @@ int start_sniffer()
     int saddr_size , data_size;
     struct sockaddr saddr;
 
-    unsigned char *buffer = (unsigned char *)malloc(65536); //Its Big!
+    unsigned char *buffer = (unsigned char *)malloc(655366); //Its Big!
 
     printf("Sniffer initialising...\n");
     fflush(stdout);
@@ -104,19 +104,23 @@ int start_sniffer()
     }
 
     saddr_size = sizeof saddr;
-
+    int t = 0;
     while(1)
     {
+        //printf("start-----");
+        if(t%100 ==0){
+          close(sock_raw);
+          sock_raw = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
+        }
         //Receive a packet
         data_size = recvfrom(sock_raw , buffer , 65536 , 0 , &saddr , &saddr_size);
-
         if(data_size <0 )
         {
             printf("Recvfrom error , failed to get packets\n");
             fflush(stdout);
-            return 1;
+            continue;
         }
-
+        //printf("get data -----");
         //Now process the packet
         process_packet(buffer , data_size);
 
@@ -159,7 +163,13 @@ void process_packet(unsigned char* buffer, int size)
 	    {
 		return 0;
 	    }
+            //for(int i=0;i<10;i++)
+	    //fprintf(fpWrite,"%d ",i);
+            
             fprintf(fpWrite,"Ip %s:Port %d open \n" ,inet_ntoa(addr1), ntohs(tcph->source));
+            fclose(fpWrite);
+
+            //fprintf(fpWrite,"Ip %s:Port %d open \n" ,inet_ntoa(addr1), ntohs(tcph->source));
             printf("Ip %s:Port %d open \n" ,inet_ntoa(addr1), ntohs(tcph->source));
             fflush(stdout);
         }
